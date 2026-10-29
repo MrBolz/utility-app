@@ -112,4 +112,4 @@ export function isScannerAvailable(): boolean {
 }
 
 /** Latest Android build, published by CI (.github/workflows/ci.yml). */
-export const APK_URL = 'https://github.com/MrBolz/utility-app/releases/download/android-latest/utility-app.apk';
+export const APK_URL = 'https://github.com/MrBolz/utility-app/releases/download/android-latest/brutus.apk';

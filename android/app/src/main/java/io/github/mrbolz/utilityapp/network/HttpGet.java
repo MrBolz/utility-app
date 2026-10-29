@@ -44,7 +44,7 @@ final class HttpGet {
             socket.connect(new InetSocketAddress(uri.getHost(), port), timeoutMs);
             socket.setSoTimeout(timeoutMs);
             String request = "GET " + path + " HTTP/1.0\r\nHost: " + uri.getHost() + (port == 80 ? "" : ":" + port)
-                    + "\r\nUser-Agent: UtilityApp\r\nAccept: */*\r\nConnection: close\r\n\r\n";
+                    + "\r\nUser-Agent: Brutus\r\nAccept: */*\r\nConnection: close\r\n\r\n";
             OutputStream out = socket.getOutputStream();
             out.write(request.getBytes(StandardCharsets.US_ASCII));
             out.flush();

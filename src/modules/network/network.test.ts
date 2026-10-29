@@ -32,7 +32,7 @@ describe('network module', () => {
     const container = document.createElement('div');
     cleanup = network.mount(container);
     expect(container.textContent).toContain('Android app needed');
-    expect(container.querySelector('a.button')?.getAttribute('href')).toMatch(/utility-app\.apk$/);
+    expect(container.querySelector('a.button')?.getAttribute('href')).toMatch(/brutus\.apk$/);
   });
 
   it('shows the connection and the devices found by a scan', async () => {

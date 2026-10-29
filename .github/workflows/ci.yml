@@ -72,17 +72,17 @@ jobs:
       - name: Unit tests and debug APK
         working-directory: android
         run: ./gradlew --no-daemon testDebugUnitTest assembleDebug -PversionCode=${{ github.run_number }} -PversionName=0.1.${{ github.run_number }}
-      - run: cp android/app/build/outputs/apk/debug/app-debug.apk utility-app.apk
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk brutus.apk
       - uses: actions/upload-artifact@v4
         with:
           name: utility-app-apk
-          path: utility-app.apk
+          path: brutus.apk
       - name: Publish the APK
         if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete android-latest --cleanup-tag --yes || true
-          gh release create android-latest utility-app.apk --target "$GITHUB_SHA" \
+          gh release create android-latest brutus.apk --target "$GITHUB_SHA" \
             --title "Android app (latest)" \
-            --notes "Build ${{ github.run_number }} from ${GITHUB_SHA::7}. Download utility-app.apk on your phone and open it to install or update."
+            --notes "Build ${{ github.run_number }} from ${GITHUB_SHA::7}. Download brutus.apk on your phone and open it to install or update."

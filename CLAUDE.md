@@ -1,4 +1,4 @@
-# Utility App
+# Brutus (utility-app)
 
 Mobile-first PWA (Vite + TypeScript, no UI framework), deployed to GitHub Pages, and wrapped as an
 Android app with Capacitor (`android/`). Each module is a tab in the top menu; the first registered

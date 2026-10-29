@@ -1,4 +1,4 @@
-# Utility App
+# Brutus
 
 A personal multi-purpose toolbox for the phone, built as a Progressive Web App
 (PWA). Each feature is a small, self-contained **module** shown as a tab in
@@ -28,7 +28,7 @@ local network. It is the same app wrapped with [Capacitor](https://capacitorjs.c
 plus a native network scanner.
 
 1. On the phone, download
-   [utility-app.apk](https://github.com/MrBolz/utility-app/releases/download/android-latest/utility-app.apk)
+   [brutus.apk](https://github.com/MrBolz/utility-app/releases/download/android-latest/brutus.apk)
    (CI publishes a new build for every push to `main`).
 2. Open it and allow installing apps from your browser when Android asks.
 3. To update, download and open the new APK the same way; your data stays.
