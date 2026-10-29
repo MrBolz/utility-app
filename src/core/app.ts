@@ -4,33 +4,51 @@ import { moduleHref, parseRoute, type Route } from './router';
 export function startApp(root: HTMLElement, registry: ModuleRegistry): () => void {
   root.innerHTML = `
     <header class="app-header">
-      <a class="back" href="#/" aria-label="Back to home" hidden>‹</a>
-      <h1 class="title"></h1>
+      <h1 class="app-title">Utilities</h1>
+      <nav class="tabs" role="tablist" aria-label="Modules"></nav>
     </header>
-    <main class="app-main"></main>
+    <main class="app-main" role="tabpanel"></main>
   `;
-  const back = root.querySelector<HTMLAnchorElement>('.back')!;
-  const title = root.querySelector<HTMLHeadingElement>('.title')!;
+  const tabs = root.querySelector<HTMLElement>('.tabs')!;
   const main = root.querySelector<HTMLElement>('.app-main')!;
+  const tabLinks = new Map<string, HTMLAnchorElement>();
   let cleanup: (() => void) | void;
+
+  for (const module of registry.list()) {
+    const tab = document.createElement('a');
+    tab.className = 'tab';
+    tab.href = moduleHref(module.id);
+    tab.setAttribute('role', 'tab');
+
+    const icon = document.createElement('span');
+    icon.className = 'tab-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = module.icon;
+
+    const label = document.createElement('span');
+    label.textContent = module.title;
+
+    tab.append(icon, label);
+    tabs.append(tab);
+    tabLinks.set(module.id, tab);
+  }
 
   function render(route: Route): void {
     cleanup?.();
     cleanup = undefined;
     main.replaceChildren();
 
-    const module = route.name === 'module' ? registry.get(route.id) : undefined;
-    if (module) {
-      back.hidden = false;
-      title.textContent = module.title;
-      document.title = `${module.title} · Utility App`;
-      cleanup = module.mount(main);
-    } else {
-      back.hidden = true;
-      title.textContent = 'Utilities';
-      document.title = 'Utility App';
-      main.append(renderHome(registry));
+    // Unknown routes and the bare start URL open the first tab.
+    const module = (route.name === 'module' && registry.get(route.id)) || registry.list()[0];
+    for (const [id, tab] of tabLinks) {
+      const selected = id === module?.id;
+      tab.setAttribute('aria-selected', String(selected));
+      if (selected) tab.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
     }
+    if (!module) return;
+
+    document.title = `${module.title} · Utility App`;
+    cleanup = module.mount(main);
   }
 
   const onHashChange = () => render(parseRoute(location.hash));
@@ -41,30 +59,4 @@ export function startApp(root: HTMLElement, registry: ModuleRegistry): () => voi
     window.removeEventListener('hashchange', onHashChange);
     cleanup?.();
   };
-}
-
-function renderHome(registry: ModuleRegistry): HTMLElement {
-  const grid = document.createElement('nav');
-  grid.className = 'tile-grid';
-  for (const module of registry.list()) {
-    const tile = document.createElement('a');
-    tile.className = 'tile';
-    tile.href = moduleHref(module.id);
-
-    const icon = document.createElement('span');
-    icon.className = 'tile-icon';
-    icon.textContent = module.icon;
-
-    const name = document.createElement('span');
-    name.className = 'tile-title';
-    name.textContent = module.title;
-
-    const description = document.createElement('span');
-    description.className = 'tile-description';
-    description.textContent = module.description;
-
-    tile.append(icon, name, description);
-    grid.append(tile);
-  }
-  return grid;
 }
