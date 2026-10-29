@@ -4,7 +4,7 @@ import { moduleHref, parseRoute, type Route } from './router';
 export function startApp(root: HTMLElement, registry: ModuleRegistry): () => void {
   root.innerHTML = `
     <header class="app-header">
-      <h1 class="app-title">Utilities</h1>
+      <h1 class="app-title">Brutus</h1>
       <nav class="tabs" role="tablist" aria-label="Modules"></nav>
     </header>
     <main class="app-main" role="tabpanel"></main>
@@ -47,7 +47,7 @@ export function startApp(root: HTMLElement, registry: ModuleRegistry): () => voi
     }
     if (!module) return;
 
-    document.title = `${module.title} · Utility App`;
+    document.title = `${module.title} · Brutus`;
     cleanup = module.mount(main);
   }
 
