@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Utilities</string>
+    <string name="title_activity_main">Utilities</string>
+    <string name="package_name">io.github.mrbolz.utilityapp</string>
+    <string name="custom_url_scheme">io.github.mrbolz.utilityapp</string>
+</resources>

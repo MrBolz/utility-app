@@ -165,8 +165,10 @@ body {
 }
 
 .button {
+  display: inline-block;
   font: inherit;
   font-weight: 600;
+  text-decoration: none;
   padding: 10px 18px;
   border: 0;
   border-radius: 12px;
@@ -207,6 +209,10 @@ body {
 
 [data-state='live'] .status::before {
   animation: pulse 1.6s ease-in-out infinite;
+}
+
+[data-state='ok'] .status {
+  color: var(--live);
 }
 
 [data-state='starting'] .status,
@@ -267,6 +273,129 @@ body {
   bottom: 0;
   border-radius: 999px;
   background: var(--accent);
+}
+
+/* Network */
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.card-note {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.link-button {
+  font: inherit;
+  font-weight: 600;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.badge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.plain-list {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reading-sub {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.scan-progress .bar {
+  margin-top: 8px;
+}
+
+.device-list {
+  margin: 0 -16px;
+  padding: 0;
+  list-style: none;
+}
+
+.device-list li + li {
+  border-top: 1px solid var(--border);
+}
+
+.device summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.device summary::-webkit-details-marker {
+  display: none;
+}
+
+.device[open] summary {
+  padding-bottom: 8px;
+}
+
+.device .readings {
+  padding: 0 16px 14px 64px;
+}
+
+.device-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.device-name {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.device-sub,
+.device-latency {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.device-latency {
+  font-variant-numeric: tabular-nums;
+}
+
+.reading-value .chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 /* Hello */

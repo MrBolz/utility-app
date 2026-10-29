@@ -49,3 +49,40 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  android:
+    runs-on: ubuntu-latest
+    permissions:
+      # Publishes the APK as the android-latest GitHub release.
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap sync android
+      - name: Unit tests and debug APK
+        working-directory: android
+        run: ./gradlew --no-daemon testDebugUnitTest assembleDebug -PversionCode=${{ github.run_number }} -PversionName=0.1.${{ github.run_number }}
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk utility-app.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: utility-app-apk
+          path: utility-app.apk
+      - name: Publish the APK
+        if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete android-latest --cleanup-tag --yes || true
+          gh release create android-latest utility-app.apk --target "$GITHUB_SHA" \
+            --title "Android app (latest)" \
+            --notes "Build ${{ github.run_number }} from ${GITHUB_SHA::7}. Download utility-app.apk on your phone and open it to install or update."
