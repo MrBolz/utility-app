@@ -1,0 +1,110 @@
+:root {
+  --bg: #f6f8fa;
+  --surface: #ffffff;
+  --text: #1f2328;
+  --muted: #59636e;
+  --border: #d1d9e0;
+  --accent: #1f6feb;
+  --accent-text: #ffffff;
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --text: #e6edf3;
+    --muted: #9198a1;
+    --border: #30363d;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-header .title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.app-header .back {
+  color: var(--accent);
+  font-size: 2rem;
+  line-height: 1;
+  text-decoration: none;
+  padding: 0 8px 4px 0;
+}
+
+.app-main {
+  padding: 16px 16px calc(env(safe-area-inset-bottom) + 16px);
+}
+
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.tile:active {
+  transform: scale(0.98);
+}
+
+.tile-icon {
+  font-size: 2rem;
+}
+
+.tile-title {
+  font-weight: 600;
+}
+
+.tile-description {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.button {
+  font: inherit;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.hello-greeting {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 24px 0;
+}
