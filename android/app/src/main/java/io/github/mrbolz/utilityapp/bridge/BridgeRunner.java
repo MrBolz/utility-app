@@ -144,11 +144,15 @@ final class BridgeRunner {
     private static void switchOn(Lan lan, BridgeStore.Device device, long deadline) throws BridgeException {
         if (remaining(deadline) <= 0) throw new BridgeException("Skipped: the run took too long");
         String key = localKey(device);
+        lan.renew(deadline);
         if (device.ip == null || device.version == null) lan.refresh(device, deadline);
         if (device.ip == null) throw new BridgeException(noAddress(device));
         Exception failure = null;
         for (int attempt = 0; attempt <= BACKOFF_MS.length; attempt++) {
-            if (attempt > 0 && !pause(BACKOFF_MS[attempt - 1], deadline)) break;
+            if (attempt > 0) {
+                if (!pause(BACKOFF_MS[attempt - 1], deadline)) break;
+                lan.renew(deadline);
+            }
             try {
                 lan.send(device, key, true);
                 return;
@@ -163,6 +167,7 @@ final class BridgeRunner {
         String ip = device.ip;
         String version = device.version;
         boolean keyRejected = failure instanceof TuyaException && ((TuyaException) failure).reason() == TuyaException.Reason.KEY_REJECTED;
+        lan.renew(deadline);
         if (lan.refresh(device, deadline) && remaining(deadline) > 0
                 && (!keyRejected || !Objects.equals(ip, device.ip) || !Objects.equals(version, device.version))) {
             try {
@@ -248,17 +253,37 @@ final class BridgeRunner {
 
     /** The Wi-Fi network of a run and what one discovery on it found (run when first needed). */
     private static final class Lan {
+        /** How long to wait for the Wi-Fi to come back after it reconnected during a run. */
+        private static final long RECONNECT_WAIT_MS = 10_000;
+
         private final Context context;
         private final BridgeStore store;
-        private final Network network;
-        private final SocketFactory sockets;
+        private Network network;
+        private SocketFactory sockets;
         private Map<String, TuyaDiscovery.Found> found;
 
         Lan(Context context, BridgeStore store, Network network) {
             this.context = context;
             this.store = store;
+            use(network);
+        }
+
+        /**
+         * Switches to the current Wi-Fi network if the one in use disconnected (the phone
+         * reconnected, e.g. to another band or mesh node): sockets of a lost network never work again.
+         */
+        void renew(long deadline) {
+            if (WifiLan.isConnected(context, network)) return;
+            Network current = WifiLan.await(context, Math.min(RECONNECT_WAIT_MS, remaining(deadline)));
+            if (current == null) return;
+            use(current);
+            // A discovery that found nothing ran on the lost network: allow another one.
+            if (found != null && found.isEmpty()) found = null;
+        }
+
+        private void use(Network network) {
             this.network = network;
-            this.sockets = network.getSocketFactory();
+            this.sockets = WifiLan.socketFactory(network);
         }
 
         /** Looks for the device's announcements and takes its address and version from them; true when it was heard. */

@@ -325,6 +325,8 @@ public class BridgesPlugin extends Plugin {
         permissions.put("exactAlarms", AlarmScheduler.canScheduleExactAlarms(context));
         permissions.put("batteryUnrestricted", context.getSystemService(PowerManager.class).isIgnoringBatteryOptimizations(context.getPackageName()));
         permissions.put("notifications", context.getSystemService(NotificationManager.class).areNotificationsEnabled());
+        // Android 12+ hibernates apps that are not opened for a few months, which cancels Brutus's alarm.
+        permissions.put("unusedAppsExempt", Build.VERSION.SDK_INT < Build.VERSION_CODES.S || context.getPackageManager().isAutoRevokeWhitelisted());
         state.put("permissions", permissions);
 
         BridgeStore.Cloud cloud = store.cloud();

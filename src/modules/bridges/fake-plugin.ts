@@ -12,7 +12,7 @@ export function sampleState(overrides: Partial<BridgesState> = {}): BridgesState
     bridge: { enabled: true, deviceIds: ['bf02'], clockPackages: [] },
     nextAlarm: { triggerAt: new Date(2026, 10, 3, 6, 30).getTime(), packageName: 'com.google.android.deskclock', appLabel: 'Clock', matches: true },
     scheduledAt: new Date(2026, 10, 3, 6, 30).getTime(),
-    permissions: { exactAlarms: true, batteryUnrestricted: false, notifications: true },
+    permissions: { exactAlarms: true, batteryUnrestricted: false, notifications: true, unusedAppsExempt: true },
     cloud: { region: 'central-europe', hasSecret: false },
     runs: [],
     ...overrides,

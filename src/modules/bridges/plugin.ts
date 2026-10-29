@@ -50,6 +50,8 @@ export interface BridgePermissions {
   exactAlarms: boolean;
   batteryUnrestricted: boolean;
   notifications: boolean;
+  /** Not hibernated by Android 12+ after a few months without being opened (always true before 12). */
+  unusedAppsExempt: boolean;
 }
 
 export interface CloudSettings {

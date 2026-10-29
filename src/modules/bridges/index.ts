@@ -63,6 +63,12 @@ const SETUP: { target: SettingsTarget; key: keyof BridgePermissions; title: stri
   { target: 'exactAlarms', key: 'exactAlarms', title: 'Exact alarms', why: 'Starts the bridge the moment your alarm rings.' },
   { target: 'battery', key: 'batteryUnrestricted', title: 'Unrestricted battery use', why: 'Keeps Android from delaying the bridge to save power.' },
   { target: 'notifications', key: 'notifications', title: 'Notifications', why: 'Tells you what the bridge switched on, or what went wrong.' },
+  {
+    target: 'appInfo',
+    key: 'unusedAppsExempt',
+    title: 'Keep running when unused',
+    why: 'Turn off "Pause app activity if unused", or Android stops the bridge after a few months without opening Brutus.',
+  },
 ];
 
 const VERSIONS = ['3.1', '3.3', '3.4', '3.5'];

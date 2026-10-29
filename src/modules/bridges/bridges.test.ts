@@ -190,13 +190,22 @@ describe('bridges module', () => {
     button(setup, 'Allow').click();
     expect(fake.plugin.openSettings).toHaveBeenCalledWith({ target: 'battery' });
 
-    fake.setState(sampleState({ permissions: { exactAlarms: true, batteryUnrestricted: true, notifications: true } }));
+    fake.setState(sampleState({ permissions: { exactAlarms: true, batteryUnrestricted: true, notifications: true, unusedAppsExempt: true } }));
     document.dispatchEvent(new Event('visibilitychange'));
     await vi.waitFor(() => expect(setup.querySelector('.status')?.textContent).toBe('All set'));
 
     // System dialogs leave the page visible; Capacitor's resume event still refreshes.
-    fake.setState(sampleState({ permissions: { exactAlarms: true, batteryUnrestricted: false, notifications: true } }));
+    fake.setState(sampleState({ permissions: { exactAlarms: true, batteryUnrestricted: false, notifications: true, unusedAppsExempt: true } }));
     document.dispatchEvent(new Event('resume'));
     await vi.waitFor(() => expect(setup.querySelector('.status')?.textContent).toBe('1 to fix'));
+
+    // Hibernation of unused apps is turned off on the app's settings page.
+    fake.setState(sampleState({ permissions: { exactAlarms: true, batteryUnrestricted: true, notifications: true, unusedAppsExempt: false } }));
+    document.dispatchEvent(new Event('resume'));
+    const row = () => [...setup.querySelectorAll<HTMLElement>('li')].find((item) => item.textContent?.includes('Keep running when unused'))!;
+    await vi.waitFor(() => expect(row().dataset.ok).toBe('false'));
+    expect(row().textContent).toContain('Pause app activity if unused');
+    button(row(), 'Allow').click();
+    expect(fake.plugin.openSettings).toHaveBeenLastCalledWith({ target: 'appInfo' });
   });
 });

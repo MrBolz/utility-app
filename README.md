@@ -59,7 +59,9 @@ scan a QR code):
    pick the data center, **Import devices**. Then **Find on network** fills in
    each plug's IP address and protocol version.
 6. Tick the plugs in **Alarm → Sockets**, turn the bridge on, and fix anything
-   the **Setup checklist** marks (exact alarms, unrestricted battery use).
+   the **Setup checklist** marks (exact alarms, unrestricted battery use, and
+   "Pause app activity if unused", which would otherwise stop the bridge after a
+   few months without opening Brutus).
 
 The keys keep working when the developer project's free trial ends. You only
 need the cloud again after re-pairing a plug in the Tuya app (its key changes);

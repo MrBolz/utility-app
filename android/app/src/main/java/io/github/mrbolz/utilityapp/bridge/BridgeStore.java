@@ -2,6 +2,7 @@ package io.github.mrbolz.utilityapp.bridge;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.UserManager;
 import io.github.mrbolz.utilityapp.tuya.TuyaDiscovery;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +30,7 @@ final class BridgeStore {
     private static final int MAX_RUNS = 20;
     static final String DEFAULT_REGION = "central-europe";
     private static final Object LOCK = new Object();
+    private static boolean movedToDeviceStorage;
 
     /** A Tuya device the bridge can switch. */
     static final class Device {
@@ -95,7 +97,18 @@ final class BridgeStore {
     private final SharedPreferences prefs;
 
     BridgeStore(Context context) {
-        prefs = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        Context app = context.getApplicationContext();
+        // Device-protected storage: after a reboot in the night the bridge is armed again before
+        // the phone is first unlocked (the keys stay sealed by SecretBox).
+        Context storage = app.createDeviceProtectedStorageContext();
+        synchronized (LOCK) {
+            if (!movedToDeviceStorage && app.getSystemService(UserManager.class).isUserUnlocked()) {
+                // Earlier versions kept the bridge in credential-protected storage; a no-op once moved.
+                storage.moveSharedPreferencesFrom(app, PREFS);
+                movedToDeviceStorage = true;
+            }
+        }
+        prefs = storage.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 
     List<Device> devices() {

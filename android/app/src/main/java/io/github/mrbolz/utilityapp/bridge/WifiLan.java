@@ -6,12 +6,17 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.wifi.WifiManager;
+import android.util.Log;
 import io.github.mrbolz.utilityapp.tuya.TuyaDiscovery;
 import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.net.SocketFactory;
 
 /** The Wi-Fi network the plugs are on: waiting for it and listening for their announcements. */
 final class WifiLan {
@@ -49,6 +54,11 @@ final class WifiLan {
         return found.get();
     }
 
+    /** False once {@code network} has disconnected, e.g. because the phone reconnected to the Wi-Fi. */
+    static boolean isConnected(Context context, Network network) {
+        return context.getSystemService(ConnectivityManager.class).getNetworkCapabilities(network) != null;
+    }
+
     /** Listens for Tuya announcements on {@code network}, holding a multicast lock so broadcasts get through. */
     static List<TuyaDiscovery.Found> discover(Context context, Network network, int durationMs) throws IOException {
         WifiManager wifi = context.getApplicationContext().getSystemService(WifiManager.class);
@@ -56,9 +66,60 @@ final class WifiLan {
         lock.setReferenceCounted(false);
         lock.acquire();
         try {
-            return TuyaDiscovery.listen(durationMs, network::bindSocket);
+            return TuyaDiscovery.listen(durationMs, socket -> bindQuietly(network, socket));
         } finally {
             lock.release();
+        }
+    }
+
+    /**
+     * Sockets bound to {@code network} where possible. A VPN that does not allow bypassing makes
+     * binding fail (EPERM); unbound sockets then follow the VPN's routing, which still reaches the
+     * LAN when the VPN leaves it out.
+     */
+    static SocketFactory socketFactory(Network network) {
+        SocketFactory bound = network.getSocketFactory();
+        return new SocketFactory() {
+            @Override
+            public Socket createSocket() {
+                Socket socket = new Socket();
+                try {
+                    network.bindSocket(socket);
+                } catch (IOException e) {
+                    Log.w(BridgeRunner.TAG, "Not binding to the Wi-Fi (VPN without bypass?): " + e.getMessage());
+                }
+                return socket;
+            }
+
+            // TuyaDevice only uses createSocket(); these are required by SocketFactory.
+            @Override
+            public Socket createSocket(String host, int port) throws IOException {
+                return bound.createSocket(host, port);
+            }
+
+            @Override
+            public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException {
+                return bound.createSocket(host, port, localHost, localPort);
+            }
+
+            @Override
+            public Socket createSocket(InetAddress host, int port) throws IOException {
+                return bound.createSocket(host, port);
+            }
+
+            @Override
+            public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
+                return bound.createSocket(address, port, localAddress, localPort);
+            }
+        };
+    }
+
+    private static void bindQuietly(Network network, DatagramSocket socket) {
+        try {
+            network.bindSocket(socket);
+        } catch (IOException e) {
+            // VPN without bypass: listen unbound, broadcasts from the LAN still arrive.
+            Log.w(BridgeRunner.TAG, "Not binding discovery to the Wi-Fi: " + e.getMessage());
         }
     }
 }
