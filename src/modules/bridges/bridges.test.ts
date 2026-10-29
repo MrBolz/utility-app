@@ -136,7 +136,7 @@ describe('bridges module', () => {
     input(container, 'localKey').value = 'k3y!k3y!k3y!k3y!';
     input(container, 'ip').value = '192.168.1.77';
     form.requestSubmit();
-    await vi.waitFor(() => expect(fake.plugin.saveDevice).toHaveBeenCalledWith({ id: 'bf77', dpId: '1', ip: '192.168.1.77', version: '3.3', localKey: 'k3y!k3y!k3y!k3y!' }));
+    await vi.waitFor(() => expect(fake.plugin.saveDevice).toHaveBeenCalledWith({ id: 'bf77', dpId: '1', ip: '192.168.1.77', localKey: 'k3y!k3y!k3y!k3y!' }));
     await vi.waitFor(() => expect(container.querySelectorAll('.check')).toHaveLength(4));
     expect(input(container, 'localKey').value).toBe('');
     expect(input(container, 'id').value).toBe('');
@@ -150,6 +150,37 @@ describe('bridges module', () => {
     input(container, 'ip').value = '192.168.1.21';
     form.requestSubmit();
     await vi.waitFor(() => expect(fake.plugin.saveDevice).toHaveBeenLastCalledWith({ id: 'bf02', dpId: '1', name: 'Coffee machine', ip: '192.168.1.21', version: '3.4' }));
+
+    // Emptying the IP field clears the stored address.
+    button(row, 'Edit').click();
+    input(container, 'ip').value = '';
+    form.requestSubmit();
+    await vi.waitFor(() => expect(fake.plugin.saveDevice).toHaveBeenLastCalledWith({ id: 'bf02', dpId: '1', name: 'Coffee machine', ip: '', version: '3.4' }));
+  });
+
+  it('only lists found plugs that are not in the device list yet', async () => {
+    fake.plugin.discover.mockImplementationOnce(async () => ({
+      state: sampleState(),
+      found: [
+        { id: 'bf77', ip: '192.168.1.77', version: '3.5', known: false },
+        { id: 'bf02', ip: '192.168.178.52', version: '3.4', known: true },
+      ],
+    }));
+    await mount();
+    button(container, 'Find on network').click();
+    await vi.waitFor(() => expect(container.textContent).toContain('bf77'));
+
+    // A cloud import adds the new plug: it disappears from "Not added yet".
+    const imported = sampleState();
+    imported.devices.push({ id: 'bf77', name: 'Hall plug', ip: '192.168.1.77', version: '3.5', dpId: '1', category: 'cz', hasKey: true });
+    fake.setState(imported);
+    const form = input(container, 'accessId').form!;
+    input(container, 'accessId').value = 'p4x7';
+    input(container, 'accessSecret').value = 's3cr3t';
+    form.requestSubmit();
+    await vi.waitFor(() => expect(fake.plugin.importFromCloud).toHaveBeenCalled());
+    await vi.waitFor(() => expect(container.textContent).toContain('Hall plug'));
+    expect(container.textContent).not.toContain('Not added yet');
   });
 
   it('opens Android settings from the setup checklist and refreshes when the app is visible again', async () => {
@@ -162,5 +193,10 @@ describe('bridges module', () => {
     fake.setState(sampleState({ permissions: { exactAlarms: true, batteryUnrestricted: true, notifications: true } }));
     document.dispatchEvent(new Event('visibilitychange'));
     await vi.waitFor(() => expect(setup.querySelector('.status')?.textContent).toBe('All set'));
+
+    // System dialogs leave the page visible; Capacitor's resume event still refreshes.
+    fake.setState(sampleState({ permissions: { exactAlarms: true, batteryUnrestricted: false, notifications: true } }));
+    document.dispatchEvent(new Event('resume'));
+    await vi.waitFor(() => expect(setup.querySelector('.status')?.textContent).toBe('1 to fix'));
   });
 });

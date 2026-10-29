@@ -37,10 +37,14 @@ export const bridges: UtilityModule = {
     const onVisible = () => {
       if (document.visibilityState === 'visible') void current.refresh();
     };
+    // Capacitor's resume also covers system dialogs (e.g. the battery one) that leave the page visible.
+    const onResume = () => void current.refresh();
     document.addEventListener('visibilitychange', onVisible);
+    document.addEventListener('resume', onResume);
     void current.refresh();
     return () => {
       document.removeEventListener('visibilitychange', onVisible);
+      document.removeEventListener('resume', onResume);
       view.destroy();
     };
   },
@@ -62,12 +66,13 @@ const SETUP: { target: SettingsTarget; key: keyof BridgePermissions; title: stri
 ];
 
 const VERSIONS = ['3.1', '3.3', '3.4', '3.5'];
-const DEFAULT_VERSION = '3.3';
 /** Option value of a clock filter with several apps, which the select can only keep. */
 const SEVERAL_APPS = '*';
 
-const alarmTime = new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
-const runTime = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+// Formatters are made per call: they keep the time zone they were created in.
+const alarmTime = (at: number) => new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(at);
+const runTime = (at: number) =>
+  new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(at);
 const nameList = new Intl.ListFormat('en', { type: 'conjunction' });
 
 class BridgesView {
@@ -225,7 +230,7 @@ class BridgesView {
       h(
         'ul',
         { class: 'plain-list' },
-        ...runs.map((run) => h('li', null, h('p', { class: 'run-head' }, `${runTime.format(run.at)} · ${run.trigger === 'alarm' ? 'Alarm' : 'Test'}`), resultList(run.results))),
+        ...runs.map((run) => h('li', null, h('p', { class: 'run-head' }, `${runTime(run.at)} · ${run.trigger === 'alarm' ? 'Alarm' : 'Test'}`), resultList(run.results))),
       ),
     );
   }
@@ -269,7 +274,8 @@ class BridgesView {
 
   private renderDevices(state: BridgesStoreState, { devices }: BridgesState): void {
     const searching = this.store.isBusy('discover');
-    const unknown = state.found?.filter((device) => !device.known) ?? [];
+    // Judged against the current list: a found plug may have been added since (e.g. by a cloud import).
+    const unknown = state.found?.filter((found) => !devices.some((device) => device.id === found.id)) ?? [];
     this.devicesTop.replaceChildren(
       cardHeader('🔌', 'Tuya devices', devices.length ? String(devices.length) : undefined),
       h(
@@ -457,7 +463,7 @@ class DeviceForm {
     if (found) {
       this.id.value = found.id;
       this.ip.value = found.ip;
-      this.setVersion(found.version ?? DEFAULT_VERSION);
+      this.setVersion(found.version ?? '');
     }
     this.show(found ? this.localKey : this.id);
   }
@@ -496,7 +502,8 @@ class DeviceForm {
     this.id.readOnly = false;
     this.localKey.required = true;
     this.localKey.placeholder = '';
-    this.setVersion(DEFAULT_VERSION);
+    // Unknown lets the app try the protocol versions and remember the one that works.
+    this.setVersion('');
     this.sync();
   }
 
@@ -511,7 +518,7 @@ class DeviceForm {
   /** Fills the version select; '' (only offered then) means the version is not known yet. */
   private setVersion(version: string): void {
     const versions = [...new Set([...VERSIONS, ...(version ? [version] : [])])].sort();
-    this.version.replaceChildren(...(version ? [] : [h('option', { value: '' }, 'Unknown')]), ...versions.map((v) => h('option', { value: v }, v)));
+    this.version.replaceChildren(...(version ? [] : [h('option', { value: '' }, 'Unknown (detect)')]), ...versions.map((v) => h('option', { value: v }, v)));
     this.version.value = version;
   }
 
@@ -519,6 +526,8 @@ class DeviceForm {
     const changes: DeviceChanges = { id: this.id.value.trim(), dpId: this.dpId.value.trim() };
     const optional = { name: this.name.value.trim(), ip: this.ip.value.trim(), version: this.version.value, localKey: this.localKey.value.trim() };
     for (const [key, value] of Object.entries(optional) as [keyof typeof optional, string][]) if (value) changes[key] = value;
+    // An emptied IP field clears the stored address (native treats '' as "unknown").
+    if (this.editing) changes.ip = optional.ip;
     // Clears the local key field as well.
     if (await this.store.saveDevice(changes)) this.reset();
   }
@@ -543,7 +552,7 @@ function nextAlarm(data: BridgesState, selected: TuyaDeviceInfo[]): HTMLElement 
   return h(
     'div',
     { class: 'next-alarm' },
-    h('p', null, 'Next alarm: ', h('strong', null, alarmTime.format(alarm.triggerAt)), ` · ${alarm.appLabel ?? alarm.packageName ?? 'unknown app'}`),
+    h('p', null, 'Next alarm: ', h('strong', null, alarmTime(alarm.triggerAt)), ` · ${alarm.appLabel ?? alarm.packageName ?? 'unknown app'}`),
     h('p', { class: 'outcome', 'data-ok': String(will) }, h('span', { class: 'mark', 'aria-hidden': 'true' }, will ? '✓' : '✗'), outcome),
   );
 }

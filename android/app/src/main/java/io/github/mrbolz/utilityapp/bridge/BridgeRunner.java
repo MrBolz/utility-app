@@ -288,9 +288,11 @@ final class BridgeRunner {
          */
         Map<String, Object> send(BridgeStore.Device device, String key, boolean on) throws IOException, TuyaException {
             String[] versions = device.version != null ? new String[] {device.version} : VERSIONS;
+            boolean probing = versions.length > 1;
             TuyaException rejected = null;
+            TuyaException last = null;
             for (String version : versions) {
-                if (rejected != null) pause(PACE_MS, Long.MAX_VALUE);
+                if (last != null) pause(PACE_MS, Long.MAX_VALUE);
                 Map<String, Object> dps = new LinkedHashMap<>();
                 dps.put(device.dpId, on);
                 try (TuyaDevice tuya = new TuyaDevice(device.id, key, device.ip, version, sockets, TIMEOUT_MS)) {
@@ -301,12 +303,15 @@ final class BridgeRunner {
                     }
                     return reported;
                 } catch (TuyaException e) {
-                    // A device that speaks another version drops the connection like one with another key.
-                    if (e.reason() != TuyaException.Reason.KEY_REJECTED) throw e;
-                    rejected = e;
+                    // A device that speaks another version either drops the connection, like one with
+                    // another key, or ignores the frame (tinytuya's scanner treats both the same).
+                    boolean timedOut = e.reason() == TuyaException.Reason.TIMEOUT;
+                    if (e.reason() != TuyaException.Reason.KEY_REJECTED && !(probing && timedOut)) throw e;
+                    if (!timedOut) rejected = e;
+                    last = e;
                 }
             }
-            throw rejected;
+            throw rejected != null ? rejected : last;
         }
     }
 }
