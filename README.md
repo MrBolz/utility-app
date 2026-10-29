@@ -13,6 +13,10 @@ Current modules:
 - **Network** (Android app only): the devices on your Wi-Fi with names, type,
   model, services and open ports, plus connection details (Wi-Fi name, signal,
   band and channel, IP, router, DNS, internet latency) and nearby Wi-Fi networks.
+- **Bridges** (Android app only): connections between apps and devices. The
+  first bridge switches selected Tuya Wi-Fi plugs **on** when an alarm from the
+  Clock app rings. Brutus talks to the plugs directly on your Wi-Fi, without the
+  Tuya app or cloud (see [Bridges setup](#bridges-setup)).
 
 ## Install on your phone
 
@@ -35,6 +39,38 @@ plus a native network scanner.
 
 To show the Wi-Fi name and nearby networks, allow location access when the app
 asks: Android only reveals those to apps with location permission.
+
+### Bridges setup
+
+Brutus switches the plugs with Tuya's local protocol, which needs each plug's
+secret **local key**. Tuya only hands these out through its developer cloud, so
+fetch them once (a computer makes step 3 easier, because the Tuya app has to
+scan a QR code):
+
+1. Sign up at [platform.tuya.com](https://platform.tuya.com) (free).
+2. **Cloud → Development → Create Cloud Project**: any name, industry *Smart
+   Home*, development method *Smart Home*, data center **Central Europe** (the
+   data center of a Swiss Tuya / Smart Life account). Keep the suggested API
+   services (IoT Core, Authorization).
+3. In the project: **Devices → Link Tuya App Account → Add App Account**, then
+   scan the QR code with the Tuya Smart app (**Me** → scan icon, top right).
+4. Copy **Access ID** and **Access Secret** from the project's **Overview**.
+5. In Brutus: **Bridges → Tuya devices → Import from Tuya cloud**, paste both,
+   pick the data center, **Import devices**. Then **Find on network** fills in
+   each plug's IP address and protocol version.
+6. Tick the plugs in **Alarm → Sockets**, turn the bridge on, and fix anything
+   the **Setup checklist** marks (exact alarms, unrestricted battery use).
+
+The keys keep working when the developer project's free trial ends. You only
+need the cloud again after re-pairing a plug in the Tuya app (its key changes);
+if the import then fails with a subscription error, extend the IoT Core trial
+under **Cloud → My Services**.
+
+Brutus reads the time of your next alarm from Android and sets its own exact
+alarm for the same moment, so it needs no notification access. Snoozing runs the
+bridge again, which is harmless because it only switches plugs on. Many plugs
+accept only one local connection at a time: if a plug reports that it is busy,
+close other apps or integrations that control it locally.
 
 ### Web app
 
@@ -60,14 +96,17 @@ npm run android:sync                         # build the web app and copy it int
 cd android && ./gradlew testDebugUnitTest assembleDebug
 ```
 
-The native code is in `android/app/src/main/java/io/github/mrbolz/utilityapp/network/`.
-Everything except `NetworkInfoReader` and `NetworkScannerPlugin` is plain Java
-without Android APIs, so its unit tests run on any JVM.
+The native code is in `android/app/src/main/java/io/github/mrbolz/utilityapp/`:
+`network/` (Network tab), `tuya/` (Tuya local protocol, discovery and cloud key
+import) and `bridge/` (alarm trigger, foreground run, storage, Bridges plugin).
+`network/` (except `NetworkInfoReader` and `NetworkScannerPlugin`) and `tuya/`
+are plain Java without Android APIs, so their unit tests run on any JVM. The
+Tuya tests use vectors generated with [tinytuya](https://github.com/jasonacox/tinytuya).
 
 ## Adding a module
 
 1. Create `src/modules/<id>/index.ts` exporting a `UtilityModule`
-   (see `src/core/types.ts`; the `hello` module is the smallest example).
+   (see `src/core/types.ts`; the `sensors` module is a small example).
 2. Add it to the list in `src/modules/index.ts`.
 3. Add a test next to it, e.g. `src/modules/<id>/<id>.test.ts`.
 

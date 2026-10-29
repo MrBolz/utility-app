@@ -17,3 +17,7 @@ module is the start tab.
   tests run anywhere; modules must check `Capacitor.isNativePlatform()` and degrade in the browser.
 - `android/` is committed except generated files (`npx cap sync android` recreates them). CI builds
   and tests the APK; this container cannot download the Android SDK (`dl.google.com` is blocked).
+- Tuya local keys and the cloud secret are encrypted with an Android Keystore key (`bridge/SecretBox`) and
+  never cross into the web layer, logs or exceptions; the web UI only sees `hasKey`/`hasSecret`.
+- The Tuya protocol code in `tuya/` mirrors tinytuya; regenerate test vectors with tinytuya rather than
+  hand-editing them.
