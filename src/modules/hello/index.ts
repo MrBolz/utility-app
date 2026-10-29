@@ -3,7 +3,6 @@ import type { UtilityModule } from '../../core/types';
 export const hello: UtilityModule = {
   id: 'hello',
   title: 'Hello World',
-  description: 'A first module to check that everything works.',
   icon: '👋',
   mount(container) {
     const heading = document.createElement('p');

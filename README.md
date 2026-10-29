@@ -1,8 +1,15 @@
 # Utility App
 
 A personal multi-purpose toolbox for the phone, built as a Progressive Web App
-(PWA). Each feature is a small, self-contained **module** shown as a tile on the
-home screen. You add a feature by writing a new module.
+(PWA). Each feature is a small, self-contained **module** shown as a tab in
+the top menu. You add a feature by writing a new module.
+
+Current modules:
+
+- **Sensors:** live readings from the phone's motion sensors (acceleration,
+  rotation rate, orientation and compass), location, battery and, where the
+  browser supports them, magnetic field and ambient light. Web apps cannot read
+  temperature sensors, so that card says so.
 
 ## Install on your phone
 
@@ -29,12 +36,12 @@ npm run build      # production build into dist/
 ## Adding a module
 
 1. Create `src/modules/<id>/index.ts` exporting a `UtilityModule`
-   (see `src/core/types.ts`, and use the `hello` module as a template).
+   (see `src/core/types.ts`; the `hello` module is the smallest example).
 2. Add it to the list in `src/modules/index.ts`.
 3. Add a test next to it, e.g. `src/modules/<id>/<id>.test.ts`.
 
 `mount(container)` renders the module. If it starts timers, listeners or other
-resources, return a cleanup function that stops them when the user leaves.
+resources, return a cleanup function that stops them when the user switches to another tab.
 
 ## Deployment
 

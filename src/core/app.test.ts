@@ -1,7 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { startApp } from './app';
 import { ModuleRegistry } from './registry';
-import { hello } from '../modules/hello';
+import type { UtilityModule } from './types';
+
+const fake = (id: string, mount: UtilityModule['mount'] = (el) => void (el.textContent = id)): UtilityModule => ({
+  id,
+  title: id.toUpperCase(),
+  icon: '',
+  mount,
+});
 
 describe('startApp', () => {
   let stop: (() => void) | undefined;
@@ -15,31 +22,43 @@ describe('startApp', () => {
     window.dispatchEvent(new HashChangeEvent('hashchange'));
   }
 
-  it('shows a tile per module and opens a module from its route', () => {
+  function setup(...modules: UtilityModule[]) {
     const registry = new ModuleRegistry();
-    registry.register(hello);
+    modules.forEach((m) => registry.register(m));
     const root = document.createElement('div');
     stop = startApp(root, registry);
+    const selected = () => root.querySelector('.tab[aria-selected="true"]')?.textContent;
+    const content = () => root.querySelector('.app-main')?.textContent;
+    return { root, selected, content };
+  }
 
-    const tiles = root.querySelectorAll<HTMLAnchorElement>('.tile');
-    expect(tiles).toHaveLength(1);
-    expect(tiles[0].getAttribute('href')).toBe('#/m/hello');
+  it('shows a tab per module and opens the first one by default', () => {
+    const { root, selected, content } = setup(fake('a'), fake('b'));
 
-    navigate('#/m/hello');
-    expect(root.querySelector('.title')?.textContent).toBe('Hello World');
-    expect(root.querySelector('.hello-greeting')?.textContent).toBe('Hello, World!');
+    const tabs = [...root.querySelectorAll<HTMLAnchorElement>('.tab')];
+    expect(tabs.map((t) => t.getAttribute('href'))).toEqual(['#/m/a', '#/m/b']);
+    expect(selected()).toBe('A');
+    expect(content()).toBe('a');
   });
 
-  it('runs the module cleanup when navigating away', () => {
-    const cleanup = vi.fn();
-    const registry = new ModuleRegistry();
-    registry.register({ id: 'x', title: 'X', description: '', icon: '', mount: () => cleanup });
-    const root = document.createElement('div');
-    stop = startApp(root, registry);
+  it('switches tabs on navigation and falls back to the first tab for unknown routes', () => {
+    const { selected, content } = setup(fake('a'), fake('b'));
 
-    navigate('#/m/x');
+    navigate('#/m/b');
+    expect(selected()).toBe('B');
+    expect(content()).toBe('b');
+
+    navigate('#/m/missing');
+    expect(selected()).toBe('A');
+  });
+
+  it('runs the module cleanup when switching tabs', () => {
+    const cleanup = vi.fn();
+    setup(fake('a'), fake('b', () => cleanup));
+
+    navigate('#/m/b');
     expect(cleanup).not.toHaveBeenCalled();
-    navigate('#/');
+    navigate('#/m/a');
     expect(cleanup).toHaveBeenCalledOnce();
   });
 });

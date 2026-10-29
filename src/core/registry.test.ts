@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ModuleRegistry } from './registry';
 import type { UtilityModule } from './types';
 
-const fake = (id: string): UtilityModule => ({ id, title: id, description: '', icon: '', mount() {} });
+const fake = (id: string): UtilityModule => ({ id, title: id, icon: '', mount() {} });
 
 describe('ModuleRegistry', () => {
   it('lists modules in registration order', () => {
