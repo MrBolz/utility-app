@@ -110,6 +110,3 @@ export const NetworkScanner = registerPlugin<NetworkScannerPlugin>('NetworkScann
 export function isScannerAvailable(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('NetworkScanner');
 }
-
-/** Latest Android build, published by CI (.github/workflows/ci.yml). */
-export const APK_URL = 'https://github.com/MrBolz/utility-app/releases/download/android-latest/brutus.apk';

@@ -1,7 +1,8 @@
+import { appRequiredCard, cardHeader } from '../../core/cards';
 import { h } from '../../core/dom';
 import type { UtilityModule } from '../../core/types';
 import { classify, displayName, KINDS, model, portLabel, serviceLabels } from './classify';
-import { APK_URL, isScannerAvailable, NetworkScanner, type NetworkInfo, type ScannedDevice, type WifiInfo } from './plugin';
+import { isScannerAvailable, NetworkScanner, type NetworkInfo, type ScannedDevice, type WifiInfo } from './plugin';
 import { NetworkStore, type NetworkState } from './store';
 
 let store: NetworkStore | undefined;
@@ -12,7 +13,9 @@ export const network: UtilityModule = {
   icon: '🛜',
   mount(container) {
     if (!isScannerAvailable()) {
-      container.append(h('div', { class: 'card-grid' }, appRequiredCard()));
+      container.append(
+        h('div', { class: 'card-grid' }, appRequiredCard('Browsers cannot look into your local network. The Android version of this app can list the devices on your Wi-Fi and show details about the connection.')),
+      );
       return;
     }
     const firstVisit = !store;
@@ -23,21 +26,6 @@ export const network: UtilityModule = {
     return () => view.destroy();
   },
 };
-
-function appRequiredCard(): HTMLElement {
-  return h(
-    'section',
-    { class: 'card' },
-    cardHeader('📲', 'Android app needed'),
-    h(
-      'div',
-      { class: 'card-body' },
-      h('p', { class: 'card-message' }, 'Browsers cannot look into your local network. The Android version of this app can list the devices on your Wi-Fi and show details about the connection.'),
-      h('p', null, h('a', { class: 'button', href: APK_URL }, 'Download the Android app')),
-      h('p', { class: 'card-message' }, 'Open the downloaded file and allow installing from your browser when Android asks. Updates install the same way.'),
-    ),
-  );
-}
 
 class NetworkView {
   private readonly grid = h('div', { class: 'card-grid network' });
@@ -196,16 +184,6 @@ class NetworkView {
     if ((event.target as HTMLDetailsElement).open) this.expanded.add(ip);
     else this.expanded.delete(ip);
   }
-}
-
-function cardHeader(icon: string, title: string, status?: string): HTMLElement {
-  return h(
-    'header',
-    { class: 'card-header' },
-    h('span', { class: 'card-icon', 'aria-hidden': 'true' }, icon),
-    h('h2', { class: 'card-title' }, title),
-    status ? h('span', { class: 'status' }, status) : null,
-  );
 }
 
 function readings(rows: [string, string | Node | undefined][]): HTMLElement {
